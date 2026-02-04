@@ -11,14 +11,18 @@ This repository contains a Docker Compose setup for creating containers for Infl
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/jersonmartinez/docker-compose-influxdb-telegraf-grafana.git
+git clone https://github.com/peternmuller/docker-compose-influxdb-telegraf-grafana.git
 cd docker-compose-influxdb-telegraf-grafana
 ```
 
 ### Deploy the Stack
 
 ```bash
-docker-compose up -d
+docker network create monitoring
+```
+
+```bash
+docker compose up -d
 ```
 
 ![Deployment Output](https://github.com/user-attachments/assets/0a9f8a91-66f6-4aec-a71c-16f5d6051b59)
@@ -27,18 +31,19 @@ docker-compose up -d
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/jersonmartinez/docker-compose-influxdb-telegraf-grafana.git
+   git clone https://github.com/peternmuller/docker-compose-influxdb-telegraf-grafana.git
    cd docker-compose-influxdb-telegraf-grafana
    ```
 
 2. **Start the Services**:
    ```bash
-   docker-compose up -d
+   docker network create monitoring
+   docker compose up -d
    ```
 
 3. **Verify the Services**:
    ```bash
-   docker-compose ps
+   docker compose ps
    ```
 
 4. **Access Grafana**:
@@ -52,7 +57,7 @@ docker-compose up -d
 - Telegraf configuration files are located in the `telegraf` directory.
 - After modifying the configuration files, restart the Telegraf container:
   ```bash
-  docker-compose restart telegraf
+  docker compose restart telegraf
   ```
 
 ### Viewing Metrics in Grafana
