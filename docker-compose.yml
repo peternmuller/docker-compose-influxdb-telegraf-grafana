@@ -1,4 +1,84 @@
 services:
+  chirpstack:
+    image: chirpstack/chirpstack:latest
+    command: -c /etc/chirpstack
+    restart: unless-stopped
+    volumes:
+      - ./chirpstack:/etc/chirpstack
+    depends_on:
+      - postgres
+      - mosquitto
+      - redis
+    environment:
+      - MQTT_BROKER_HOST=mosquitto
+      - REDIS_HOST=redis
+      - POSTGRESQL_HOST=postgres
+    ports:
+      - "8080:8080"
+
+  chirpstack-gateway-bridge:
+    image: chirpstack/chirpstack-gateway-bridge:latest
+    restart: unless-stopped
+    ports:
+      - "1700:1700/udp"
+    volumes:
+      - ./chirpstack-gateway-bridge:/etc/chirpstack-gateway-bridge
+    environment:
+      - INTEGRATION__MQTT__EVENT_TOPIC_TEMPLATE=eu868/gateway/{{ .GatewayID }}/event/{{ .EventType }}
+      - INTEGRATION__MQTT__STATE_TOPIC_TEMPLATE=eu868/gateway/{{ .GatewayID }}/state/{{ .StateType }}
+      - INTEGRATION__MQTT__COMMAND_TOPIC_TEMPLATE=eu868/gateway/{{ .GatewayID }}/command/#
+    depends_on:
+      - mosquitto
+  
+  chirpstack-gateway-bridge-basicstation:
+    image: chirpstack/chirpstack-gateway-bridge:latest
+    restart: unless-stopped
+    command: -c /etc/chirpstack-gateway-bridge/chirpstack-gateway-bridge-basicstation-eu868.toml
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./chirpstack-gateway-bridge:/etc/chirpstack-gateway-bridge
+    depends_on:
+      - mosquitto
+
+  chirpstack-rest-api:
+    image: chirpstack/chirpstack-rest-api:latest
+    restart: unless-stopped
+    command: --server chirpstack:8080 --bind 0.0.0.0:8090 --insecure
+    ports:
+      - "8090:8090"
+    depends_on:
+      - chirpstack
+
+  postgres:
+    image: postgres:14-alpine
+    restart: unless-stopped
+    volumes:
+      - ./postgresql/initdb:/docker-entrypoint-initdb.d
+      - postgresqldata:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=chirpstack
+      - POSTGRES_PASSWORD=chirpstack
+      - POSTGRES_DB=chirpstack
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --save 300 1 --save 60 100 --appendonly no
+    volumes:
+      - redisdata:/data
+
+  mosquitto:
+    image: eclipse-mosquitto:alpine
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/config/:/mosquitto/config/
+    networks:
+      - default
+      - monitoring
+
   telegraf:
     image: telegraf:latest
     container_name: telegraf
@@ -16,7 +96,7 @@ services:
       - monitoring  # Connect the Telegraf container to the monitoring network
 
   influxdb2:
-    image: influxdb:2
+    image: influxdb:2-alpine
     container_name: influxdb2
     restart: always
     environment:
@@ -31,7 +111,7 @@ services:
       - monitoring  # Connect the InfluxDB container to the monitoring network
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana
     container_name: grafana
     restart: always
     depends_on:
@@ -49,6 +129,8 @@ services:
       - monitoring  # Connect the Grafana container to the monitoring network
 
 volumes:
+  postgresqldata:
+  redisdata:
   grafana_data: {}  # Volume for Grafana data
   influxdb_data: {}  # Volume for InfluxDB data
 
