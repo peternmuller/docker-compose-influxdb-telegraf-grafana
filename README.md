@@ -79,8 +79,6 @@ For a comprehensive explanation of Telegraf configuration across different platf
 
 3. **Grafana**: A web-based interface for visualizing metrics stored in InfluxDB, allowing creation of dashboards and panels for monitoring.
 
-4. **Nginx**: A web server providing static content serving and request proxying capabilities.
-
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.

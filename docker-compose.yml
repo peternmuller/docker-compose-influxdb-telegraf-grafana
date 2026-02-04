@@ -1,56 +1,23 @@
 services:
   telegraf:
-    image: telegraf
+    image: telegraf:latest
     container_name: telegraf
     restart: always
     volumes:
       - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro  # Mount the Telegraf configuration file
       - /var/run/docker.sock:/var/run/docker.sock:ro  # Mount the Docker socket to collect Docker metrics
     depends_on:
-      - influxdb
-      - nginx
+      - influxdb2
     links:
-      - influxdb
-      - nginx
+      - influxdb2
     ports:
       - '8125:8125'  # Expose Telegraf's StatsD port
     networks:
       - monitoring  # Connect the Telegraf container to the monitoring network
 
-  telegraf_second:
-    image: telegraf
-    container_name: telegraf_second
-    restart: always
-    volumes:
-      - ./telegraf/telegraf_second.conf:/etc/telegraf/telegraf.conf:ro  # Mount the second Telegraf configuration file
-    depends_on:
-      - influxdb
-    links:
-      - influxdb
-    ports:
-      - '8126:8126'  # Expose the second Telegraf's StatsD port
-    networks:
-      - monitoring  # Connect the second Telegraf container to the monitoring network
-
-  nginx:
-    image: nginx:alpine
-    container_name: nginx
-    restart: always
-    volumes:
-      - ./nginx:/etc/nginx/conf.d  # Mount the Nginx configuration directory
-    ports:
-      - '8080:80'  # Expose Nginx on port 8080
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 2
-    networks:
-      - monitoring  # Connect the Nginx container to the monitoring network
-
-  influxdb:
-    image: influxdb:1.8-alpine
-    container_name: influxdb
+  influxdb2:
+    image: influxdb:2
+    container_name: influxdb2
     restart: always
     environment:
       - INFLUXDB_DB=influx
@@ -59,21 +26,21 @@ services:
     ports:
       - '8086:8086'  # Expose InfluxDB on port 8086
     volumes:
-      - influxdb_data:/var/lib/influxdb  # Mount the InfluxDB data directory
+      - influxdb_data:/var/lib/influxdb2  # Mount the InfluxDB data directory
     networks:
       - monitoring  # Connect the InfluxDB container to the monitoring network
 
   grafana:
-    image: grafana/grafana-enterprise
+    image: grafana/grafana:latest
     container_name: grafana
     restart: always
     depends_on:
-      - influxdb
+      - influxdb2
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
     links:
-      - influxdb
+      - influxdb2
     ports:
       - '3000:3000'  # Expose Grafana on port 3000
     volumes:
