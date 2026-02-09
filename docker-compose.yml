@@ -146,11 +146,23 @@ services:
     networks:
       - monitoring # Connect the Grafana container to the monitoring network
 
+  node-red:
+    image: nodered/node-red:latest-minimal
+    environment:
+      - TZ=Europe/Paris
+    ports:
+      - "1880:1880"
+    volumes:
+      - node-red-data:/data
+    networks:
+      - monitoring
+
 volumes:
   postgresqldata:
   redisdata:
   grafana_data: {} # Volume for Grafana data
   influxdb_data: {} # Volume for InfluxDB data
+  node-red-data:
 
 networks:
   monitoring:
