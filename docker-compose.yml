@@ -91,7 +91,7 @@ services:
     container_name: zigbee2mqtt
     restart: unless-stopped
     volumes:
-      - ./data:/app/data
+      - ./zigbee2mqtt_data:/app/data
       - /run/udev:/run/udev:ro
     ports:
       # Frontend port
