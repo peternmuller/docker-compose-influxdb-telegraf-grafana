@@ -1,18 +1,14 @@
-# Monitoring with Docker Compose using InfluxDB, Telegraf and Grafana
+# IoT Stack with LoRa, Zigbee, MQTT and Monitoring
 
-This repository contains a Docker Compose setup for creating containers for InfluxDB, Telegraf, and Grafana, providing a comprehensive monitoring solution.
-
-## Infrastructure Model
-
-![Infrastructure Model](https://github.com/user-attachments/assets/cbac355d-2c26-469b-a953-650b083a7eda)
+This repository contains a Docker Compose setup to create a full LoRa/Zigbee + MTIG + Node-RED IoT stack. 
 
 ## Quick Start
 
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/peternmuller/docker-compose-influxdb-telegraf-grafana.git
-cd docker-compose-influxdb-telegraf-grafana
+git clone https://github.com/peternmuller/multiprotocol-iot-gateway-docker.git
+cd multiprotocol-iot-gateway-docker
 ```
 
 ### Deploy the Stack
@@ -31,8 +27,8 @@ docker compose up -d
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/peternmuller/docker-compose-influxdb-telegraf-grafana.git
-   cd docker-compose-influxdb-telegraf-grafana
+   git clone https://github.com/peternmuller/multiprotocol-iot-gateway-docker.git
+   cd multiprotocol-iot-gateway-docker
    ```
 
 2. **Start the Services**:
@@ -60,6 +56,29 @@ docker compose up -d
   docker compose restart telegraf
   ```
 
+### Configuring Zigbee2MQTT
+
+**Important**: Zigbee2MQTT requires a Zigbee USB adapter to be plugged into your host machine for the Docker container to start successfully.
+
+1. **Identify Your USB Adapter**:
+   - Determine your adapter's location by following the [Zigbee2MQTT adapter identification guide](https://www.zigbee2mqtt.io/guide/configuration/adapter-settings.html#determine-location-of-the-adapter).
+   - Update the `devices` mapping in [docker-compose.yml](docker-compose.yml) with your adapter's actual location (currently set to a Sonoff Zigbee 3.0 USB Dongle Plus V2).
+
+2. **Configure the Service**:
+   - A `configuration.yaml` file will be automatically created in the `zigbee2mqtt_data/` directory on first run.
+   - Ensure the following settings are present in `zigbee2mqtt_data/configuration.yaml`:
+     ```yaml
+     mqtt:
+       server: mqtt://mosquitto:1883  # Use the Docker service name, not localhost
+     frontend:
+       enabled: true
+       port: 8888  # To match docker-compose.yml (default port 8080 conflicts with ChirpStack)
+     onboarding: false  # Disable onboarding; configure directly in configuration.yaml
+     ```
+
+3. **Access the Frontend**:
+   - Once running, open http://localhost:8888 to access the Zigbee2MQTT web interface.
+
 ### Viewing Metrics in Grafana
 
 1. Open Grafana and add InfluxDB as a data source.
@@ -78,11 +97,24 @@ For a comprehensive explanation of Telegraf configuration across different platf
 
 ## Service Descriptions
 
-1. **InfluxDB**: A time-series database designed for high write and query loads, used to store metrics collected by Telegraf.
+### IoT Protocol Support
+1. **ChirpStack**: LoRaWAN network server and application server for managing LoRa devices and gateways.
+2. **ChirpStack Gateway Bridge**: Bridges LoRa gateways to ChirpStack via MQTT (supports standard MQTT and Basic Station protocols).
+3. **ChirpStack REST API**: RESTful API interface for remote integration and control.
+4. **Zigbee2MQTT**: Converts Zigbee protocol to MQTT for standardized IoT messaging.
 
-2. **Telegraf**: An agent for collecting, processing, aggregating, and writing metrics. It gathers data from the host and Docker containers, sending it to InfluxDB.
+### Messaging & Storage
+5. **Mosquitto**: MQTT broker for pub/sub messaging between IoT services, gateways, and applications.
+6. **PostgreSQL**: Primary database for ChirpStack application data, user accounts, and device configurations.
+7. **Redis**: In-memory cache for ChirpStack session management and real-time data.
 
-3. **Grafana**: A web-based interface for visualizing metrics stored in InfluxDB, allowing creation of dashboards and panels for monitoring.
+### Monitoring
+8. **Telegraf**: Agent for collecting metrics from the Docker host, containers, and services, forwarding to InfluxDB.
+9. **InfluxDB**: Time-series database optimized for high-volume metrics and telemetry storage.
+10. **Grafana**: Web-based visualization and dashboard platform for creating real-time monitoring views.
+
+### Automation
+11. **Node-RED**: Low-code visual programming environment for workflow automation and integration between services.
 
 ## Contributing
 
